@@ -69,7 +69,7 @@ class JdbcSelectQuerier(
                 rs = stmt!!.executeQuery()
             } catch (e: Throwable) {
                 close()
-                throw e
+                throw RuntimeException("error when executing query ${q.sql} with parameters ${q.bindings}", e)
             }
         }
 

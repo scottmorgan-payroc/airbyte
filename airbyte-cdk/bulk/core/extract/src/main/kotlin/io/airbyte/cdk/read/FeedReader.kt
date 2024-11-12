@@ -73,6 +73,7 @@ class FeedReader(
     }
 
     private suspend fun createPartitions(partitionsCreatorID: Long): List<PartitionReader> {
+        log.info{"creating partitions for feed=$feed, feedBootstrap=$feedBootstrap, partitionsCreatorFactories=${root.partitionsCreatorFactories}"}
         val partitionsCreator: PartitionsCreator = run {
             for (factory in root.partitionsCreatorFactories) {
                 log.info { "Attempting bootstrap using ${factory::class}." }
