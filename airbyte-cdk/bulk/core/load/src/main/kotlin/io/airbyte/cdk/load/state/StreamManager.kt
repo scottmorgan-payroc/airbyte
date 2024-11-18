@@ -106,7 +106,9 @@ class DefaultStreamManager(
     private val rangesState: ConcurrentHashMap<Batch.State, RangeSet<Long>> = ConcurrentHashMap()
 
     init {
-        Batch.State.entries.forEach { rangesState[it] = TreeRangeSet.create() }
+        Batch.State.entries.forEach {
+            rangesState[it] = TreeRangeSet.create(listOf(Range.closedOpen(0L, 1L)))
+        }
     }
 
     override fun countRecordIn(): Long {

@@ -102,8 +102,7 @@ class ObjectStorageDataDumper(
             }
             is AvroFormatConfiguration -> {
                 val finalSchema = avroMapperPipeline.finalSchema.withAirbyteMeta(wasFlattened)
-                inputStream.toAvroReader(finalSchema.toAvroSchema(stream.descriptor)).use { reader
-                    ->
+                inputStream.toAvroReader(finalSchema.toAvroSchema(stream.descriptor)).use { reader ->
                     reader
                         .recordSequence()
                         .map {
@@ -116,8 +115,7 @@ class ObjectStorageDataDumper(
             }
             is ParquetFormatConfiguration -> {
                 val finalSchema = parquetMapperPipeline.finalSchema.withAirbyteMeta(wasFlattened)
-                inputStream.toParquetReader(finalSchema.toAvroSchema(stream.descriptor)).use {
-                    reader ->
+                inputStream.toParquetReader(finalSchema.toAvroSchema(stream.descriptor)).use { reader ->
                     reader
                         .recordSequence()
                         .map {

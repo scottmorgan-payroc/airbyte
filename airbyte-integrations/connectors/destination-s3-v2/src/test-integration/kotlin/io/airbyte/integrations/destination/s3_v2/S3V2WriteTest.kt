@@ -70,7 +70,6 @@ class S3V2WriteTestJsonStaging :
         promoteUnionToObject = false,
         preserveUndeclaredFields = true,
         allTypesBehavior = Untyped,
-        commitDataIncrementally = false,
     )
 
 class S3V2WriteTestJsonGzip :

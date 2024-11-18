@@ -4,16 +4,17 @@
 
 package io.airbyte.cdk.load.file.parquet
 
+import io.airbyte.cdk.load.command.DestinationStream
 import java.io.Closeable
 import java.io.File
 import java.io.InputStream
 import kotlin.io.path.outputStream
-import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.hadoop.fs.Path
 import org.apache.parquet.avro.AvroParquetReader
 import org.apache.parquet.avro.AvroReadSupport
 import org.apache.parquet.hadoop.ParquetReader as ApacheParquetReader
+import org.apache.avro.Schema
 
 class ParquetReader(
     private val reader: ApacheParquetReader<GenericRecord>,

@@ -4,6 +4,7 @@
 
 package io.airbyte.cdk.load.task
 
+import com.google.common.collect.Range
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import io.airbyte.cdk.load.command.DestinationCatalog
 import io.airbyte.cdk.load.command.DestinationStream
@@ -15,6 +16,7 @@ import io.airbyte.cdk.load.message.DestinationMessage
 import io.airbyte.cdk.load.message.DestinationRecordWrapped
 import io.airbyte.cdk.load.message.MessageQueueSupplier
 import io.airbyte.cdk.load.message.QueueWriter
+import io.airbyte.cdk.load.message.SimpleBatch
 import io.airbyte.cdk.load.state.Reserved
 import io.airbyte.cdk.load.state.SyncManager
 import io.airbyte.cdk.load.task.implementor.CloseStreamTaskFactory
@@ -198,9 +200,17 @@ class DefaultDestinationTaskLauncher(
         stream: DestinationStream.Descriptor,
         file: SpilledRawMessagesLocalFile
     ) {
-        log.info { "Starting process records task for $stream, file $file" }
-        val task = processRecordsTaskFactory.make(this, stream, file)
-        enqueue(task)
+        if (file.totalSizeBytes > 0L) {
+            log.info { "Starting process records task for ${stream}, file $file" }
+            val task = processRecordsTaskFactory.make(this, stream, file)
+            enqueue(task)
+        } else {
+            log.info { "No records to process in $file, skipping process records" }
+            handleNewBatch(
+                stream,
+                BatchEnvelope(SimpleBatch(Batch.State.COMPLETE), Range.openClosed(0L, 0L))
+            )
+        }
         if (!file.endOfStream) {
             log.info { "End-of-stream not reached, restarting spill-to-disk task for $stream" }
             val spillTask = spillToDiskTaskFactory.make(this, stream)

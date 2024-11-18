@@ -138,20 +138,20 @@ class ObjectStorageFallbackPersister(
     private val client: ObjectStorageClient<*>,
     private val pathFactory: PathFactory
 ) : DestinationStatePersister<ObjectStorageDestinationState> {
+    private val log = KotlinLogging.logger {}
     override suspend fun load(stream: DestinationStream): ObjectStorageDestinationState {
         val matcher = pathFactory.getPathMatcher(stream)
-        val pathConstant = pathFactory.getFinalDirectory(stream, streamConstant = true).toString()
-        val firstVariableIndex = pathConstant.indexOfFirst { it == '$' }
         val longestUnambiguous =
-            if (firstVariableIndex > 0) {
-                pathConstant.substring(0, firstVariableIndex)
-            } else {
-                pathConstant
-            }
-        client
-            .list(longestUnambiguous)
-            .mapNotNull { matcher.match(it.key) }
-            .toList()
+            pathFactory.getFinalDirectory(stream, streamConstantPrefix = true).toString()
+        log.info { "Inferring destination state from data under $longestUnambiguous" }
+        // TODO: Re-flow this before release
+        val keys = client.list(longestUnambiguous).toList()
+        log.info { "Found ${keys.size} keys under $longestUnambiguous" }
+        val matches = keys.mapNotNull { matcher.match(it.key) }.toList()
+        log.info {
+            "Matched ${matches.map { it.path to it.partNumber } } matching keys under against ${matcher.regex}"
+        }
+        matches
             .groupBy {
                 client
                     .getMetadata(it.path)[ObjectStorageDestinationState.METADATA_GENERATION_ID_KEY]
@@ -163,6 +163,10 @@ class ObjectStorageFallbackPersister(
             }
             .toMutableMap()
             .let {
+                val generationSizes = it.map { gen -> gen.key to gen.value.size }
+                log.info {
+                    "Inferred state for generations with size: $generationSizes (minimum=${stream.minimumGenerationId}; current=${stream.generationId}"
+                }
                 return ObjectStorageDestinationState(
                     mutableMapOf(ObjectStorageDestinationState.State.FINALIZED to it)
                 )
